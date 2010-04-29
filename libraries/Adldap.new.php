@@ -60,7 +60,7 @@ define ('ADLDAP_CONTAINER', 'CN');
 * Before asking questions, please read the Documentation at
 * http://adldap.sourceforge.net/wiki/doku.php?id=api
 */
-class adLDAP {
+class Adldap {
     /**
     * The account suffix for your domain, can be set when the class is invoked
     * 
