@@ -334,7 +334,7 @@ class Adldap {
 		if(count($options) == 0){
 			$this->_ci =& get_instance();
 			$this->_ci->config->load('adldap', true);
-			$options = $this->config->item('adldap');
+			$options = $this->_ci->config->item('adldap');
 		}
 		
         // You can specifically overide any of the default configuration options setup above
