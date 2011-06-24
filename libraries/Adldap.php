@@ -906,7 +906,9 @@ class Adldap {
 
         // Set the account control attribute
         $control_options=array("NORMAL_ACCOUNT");
-        if (!$attributes["enabled"]){ $control_options[]="ACCOUNTDISABLE"; }
+		if (!array_key_exists('enabled', $attributes) || !$attributes["enabled"]) {
+			$control_options[]="ACCOUNTDISABLE";
+		}
         $add["userAccountControl"][0]=$this->account_control($control_options);
         //echo ("<pre>"); print_r($add);
 
