@@ -334,7 +334,7 @@ class Adldap {
 		if(count($options) == 0){
 			$this->_ci =& get_instance();
 			$this->_ci->config->load('adldap', true);
-			$options = $this->config->item('adldap');
+			$options = $this->_ci->config->item('adldap');
 		}
 		
         // You can specifically overide any of the default configuration options setup above
@@ -906,7 +906,9 @@ class Adldap {
 
         // Set the account control attribute
         $control_options=array("NORMAL_ACCOUNT");
-        if (!$attributes["enabled"]){ $control_options[]="ACCOUNTDISABLE"; }
+		if (!array_key_exists('enabled', $attributes) || !$attributes["enabled"]) {
+			$control_options[]="ACCOUNTDISABLE";
+		}
         $add["userAccountControl"][0]=$this->account_control($control_options);
         //echo ("<pre>"); print_r($add);
 
@@ -1969,55 +1971,78 @@ class Adldap {
         // Check every attribute to see if it contains 8bit characters and then UTF8 encode them
         array_walk($attributes, array($this, 'encode8bit'));
 
-        if ($attributes["address_city"]){ $mod["l"][0]=$attributes["address_city"]; }
-        if ($attributes["address_code"]){ $mod["postalCode"][0]=$attributes["address_code"]; }
-        //if ($attributes["address_country"]){ $mod["countryCode"][0]=$attributes["address_country"]; } // use country codes?
-        if ($attributes["address_country"]){ $mod["c"][0]=$attributes["address_country"]; }
-        if ($attributes["address_pobox"]){ $mod["postOfficeBox"][0]=$attributes["address_pobox"]; }
-        if ($attributes["address_state"]){ $mod["st"][0]=$attributes["address_state"]; }
-        if ($attributes["address_street"]){ $mod["streetAddress"][0]=$attributes["address_street"]; }
-        if ($attributes["company"]){ $mod["company"][0]=$attributes["company"]; }
-        if ($attributes["change_password"]){ $mod["pwdLastSet"][0]=0; }
-        if ($attributes["department"]){ $mod["department"][0]=$attributes["department"]; }
-        if ($attributes["description"]){ $mod["description"][0]=$attributes["description"]; }
-        if ($attributes["display_name"]){ $mod["displayName"][0]=$attributes["display_name"]; }
-        if ($attributes["email"]){ $mod["mail"][0]=$attributes["email"]; }
-        if ($attributes["expires"]){ $mod["accountExpires"][0]=$attributes["expires"]; } //unix epoch format?
-        if ($attributes["firstname"]){ $mod["givenName"][0]=$attributes["firstname"]; }
-        if ($attributes["home_directory"]){ $mod["homeDirectory"][0]=$attributes["home_directory"]; }
-        if ($attributes["home_drive"]){ $mod["homeDrive"][0]=$attributes["home_drive"]; }
-        if ($attributes["initials"]){ $mod["initials"][0]=$attributes["initials"]; }
-        if ($attributes["logon_name"]){ $mod["userPrincipalName"][0]=$attributes["logon_name"]; }
-        if ($attributes["manager"]){ $mod["manager"][0]=$attributes["manager"]; }  //UNTESTED ***Use DistinguishedName***
-        if ($attributes["office"]){ $mod["physicalDeliveryOfficeName"][0]=$attributes["office"]; }
-        if ($attributes["password"]){ $mod["unicodePwd"][0]=$this->encode_password($attributes["password"]); }
-        if ($attributes["profile_path"]){ $mod["profilepath"][0]=$attributes["profile_path"]; }
-        if ($attributes["script_path"]){ $mod["scriptPath"][0]=$attributes["script_path"]; }
-        if ($attributes["surname"]){ $mod["sn"][0]=$attributes["surname"]; }
-        if ($attributes["title"]){ $mod["title"][0]=$attributes["title"]; }
-        if ($attributes["telephone"]){ $mod["telephoneNumber"][0]=$attributes["telephone"]; }
-        if ($attributes["mobile"]){ $mod["mobile"][0]=$attributes["mobile"]; }
-        if ($attributes["pager"]){ $mod["pager"][0]=$attributes["pager"]; }
-        if ($attributes["ipphone"]){ $mod["ipphone"][0]=$attributes["ipphone"]; }
-        if ($attributes["web_page"]){ $mod["wWWHomePage"][0]=$attributes["web_page"]; }
-        if ($attributes["fax"]){ $mod["facsimileTelephoneNumber"][0]=$attributes["fax"]; }
-        if ($attributes["enabled"]){ $mod["userAccountControl"][0]=$attributes["enabled"]; }
-        
-        // Distribution List specific schema
-        if ($attributes["group_sendpermission"]){ $mod["dlMemSubmitPerms"][0]=$attributes["group_sendpermission"]; }
-        if ($attributes["group_rejectpermission"]){ $mod["dlMemRejectPerms"][0]=$attributes["group_rejectpermission"]; }
-        
-        // Exchange Schema
-        if ($attributes["exchange_homemdb"]){ $mod["homeMDB"][0]=$attributes["exchange_homemdb"]; }
-        if ($attributes["exchange_mailnickname"]){ $mod["mailNickname"][0]=$attributes["exchange_mailnickname"]; }
-        if ($attributes["exchange_proxyaddress"]){ $mod["proxyAddresses"][0]=$attributes["exchange_proxyaddress"]; }
-        if ($attributes["exchange_usedefaults"]){ $mod["mDBUseDefaults"][0]=$attributes["exchange_usedefaults"]; }
-        if ($attributes["exchange_policyexclude"]){ $mod["msExchPoliciesExcluded"][0]=$attributes["exchange_policyexclude"]; }
-        if ($attributes["exchange_policyinclude"]){ $mod["msExchPoliciesIncluded"][0]=$attributes["exchange_policyinclude"]; }
-        
-        // This schema is designed for contacts
-        if ($attributes["exchange_hidefromlists"]){ $mod["msExchHideFromAddressLists"][0]=$attributes["exchange_hidefromlists"]; }
-        if ($attributes["contact_email"]){ $mod["targetAddress"][0]=$attributes["contact_email"]; }
+        $mapping = array(
+            "address_city" => "l",
+            "address_code" => "postalCode",
+            "address_country" => "c",
+            "address_pobox" => "postOfficeBox",
+            "address_city" => "l",
+            "address_code" => "postalCode",
+            "address_country" => "c",
+            "address_pobox" => "postOfficeBox",
+            "address_state" => "st",
+            "address_street" => "streetAddress",
+            "company" => "company",
+            "change_password" => "pwdLastSet",
+            "department" => "department",
+            "description" => "description",
+            "display_name" => "displayName",
+            "email" => "mail",
+            "expires" => "accountExpires", //unix epoch format?
+            "firstname" => "givenName",
+            "home_directory" => "homeDirectory",
+            "home_drive" => "homeDrive",
+            "initials" => "initials",
+            "logon_name" => "userPrincipalName",
+            "manager" => "manager", //UNTESTED ***Use DistinguishedName***
+            "office" => "physicalDeliveryOfficeName",
+            "password" => "unicodePwd",
+            "profile_path" => "profilepath",
+            "script_path" => "scriptPath",
+            "surname" => "sn",
+            "title" => "title",
+            "telephone" => "telephoneNumber",
+            "mobile" => "mobile",
+            "pager" => "pager",
+            "ipphone" => "ipphone",
+            "web_page" => "wWWHomePage",
+            "fax" => "facsimileTelephoneNumber",
+            "enabled" => "userAccountControl",
+
+            // Distribution List specific schema
+            "group_sendpermission" => "dlMemSubmitPerms",
+            "group_rejectpermission" => "dlMemRejectPerms",
+
+            // Exchange Schema
+            "exchange_homemdb" => "homeMDB",
+            "exchange_mailnickname" => "mailNickname",
+            "exchange_proxyaddress" => "proxyAddresses",
+            "exchange_usedefaults" => "mDBUseDefaults",
+            "exchange_policyexclude" => "msExchPoliciesExcluded",
+            "exchange_policyinclude" => "msExchPoliciesIncluded",
+
+            // This schema is designed for contacts
+            "exchange_hidefromlists" => "msExchHideFromAddressLists",
+            "contact_email" => "targetAddress",
+        );
+
+        foreach ($mapping as $attr_key => $mod_key) {
+            if (array_key_exists($attr_key, $attributes)) {
+                switch ($attr_key) {
+                case 'change_password':
+                    $value = 0;
+                    break;
+                case 'password':
+                case 'unicodePwd':
+                    $value = $this->encode_password($attributes[$attr_key]);
+                    break;
+                default:
+                    $value = $attributes[$attr_key];
+                    break;
+                }
+                $mod[$mod_key][0] = $attributes[$attr_key];
+            }
+        }
         
         //echo ("<pre>"); print_r($mod);
         /*
